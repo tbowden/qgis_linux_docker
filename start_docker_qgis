@@ -1,0 +1,29 @@
+# Not yet working. Warning: Mounts entire home dir to docker container.
+# ** Don't do this if you are running SeLinux**. You will completely bork
+# your system (according to the Docker ref docs on bind mounts).
+
+# Pass in the user id & gid of the user starting the container. The user name
+# won't be known inside the Docker container, but otherwise permissions work.
+
+# Current issues arrise with /run/user/<uid> folder ($XDG_RUNTIME_DIR), but
+# working on it... Not sure yet if making it rw will completely bork my current
+# login session...
+
+# The Docker image referred to isn't on Docker Hub- assumed to be built locally
+# There is no [ENTRYPOINT] or [CMD] in the Dockerfile until things get working...
+
+# Detaches from terminal (docker run -d), so use 'docker exec -it qgis_experimental /bin/bash'
+# to connect to it after starting
+
+docker run --rm -d -it \
+--hostname qgis \
+--name qgis_experimental \
+--device /dev/dri \
+--net=host --env="DISPLAY" \
+--env="XDG_RUNTIME_DIR" \
+--user $(id -u):$(id -g) \
+--mount type=bind,source="$XDG_RUNTIME_DIR",target="$XDG_RUNTIME_DIR",readonly \
+--mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,readonly \
+--mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly \
+--mount type=bind,source="$HOME",target="/home/$(id -nu)" \
+qgis-3.8.2:latest /bin/bash
